@@ -63,6 +63,11 @@ app.use('/api/holidays', holidayRoutes);
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
+// Root path route for verification on Vercel
+app.get('/', (req, res) => {
+  res.json({ message: 'ByThawkHR API is running' });
+});
+
 // Error Handling
 app.use(notFound);
 app.use(errorHandler);
@@ -76,3 +81,5 @@ process.on('unhandledRejection', (err) => {
   console.error(`Unhandled Rejection: ${err.message}`);
   server.close(() => process.exit(1));
 });
+
+export default app;
