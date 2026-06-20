@@ -18,9 +18,6 @@ import ticketRoutes from './routes/ticketRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import holidayRoutes from './routes/holidayRoutes.js';
 
-// Connect to MongoDB
-connectDB();
-
 const app = express();
 
 // Ensure DB is connected for serverless environments
