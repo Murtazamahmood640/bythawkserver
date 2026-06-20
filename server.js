@@ -36,7 +36,16 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (Electron desktop app, Postman, mobile apps)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+    
+    // Check if origin matches allowed domains
+    const isLocalhost = origin.startsWith('http://localhost:');
+    const isVercel = origin.endsWith('.vercel.app') || origin.includes('bythawkhr.vercel.app');
+    const isClientUrl = process.env.CLIENT_URL && origin === process.env.CLIENT_URL;
+
+    if (isLocalhost || isVercel || isClientUrl) {
+      return callback(null, true);
+    }
+    
     callback(new Error(`CORS: origin ${origin} not allowed`));
   },
   credentials: true,
