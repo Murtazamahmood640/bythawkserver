@@ -23,6 +23,12 @@ connectDB();
 
 const app = express();
 
+// Ensure DB is connected for serverless environments
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
 // Middleware
 // Accept multiple origins: env var, both dev ports, and Electron (null origin from file://)
 const allowedOrigins = [
