@@ -22,11 +22,16 @@ export const checkIn = asyncHandler(async (req, res) => {
 });
 
 export const checkOut = asyncHandler(async (req, res) => {
-  const { start, end } = dayBounds();
-  const record = await Attendance.findOne({ employee: req.user._id, date: { $gte: start, $lte: end } });
-  if (!record?.checkIn) { res.status(400); throw new Error('No check-in found for today'); }
-  if (record.checkOut)  { res.status(400); throw new Error('Already checked out today'); }
+  const record = await Attendance.findOne({ employee: req.user._id }).sort({ date: -1 });
+  if (!record?.checkIn) { res.status(400); throw new Error('No check-in found'); }
+  if (record.checkOut)  { res.status(400); throw new Error('Already checked out or no active check-in'); }
+  
   const now = new Date();
+  if ((now - record.checkIn) > 24 * 3600 * 1000) {
+    res.status(400);
+    throw new Error('Active check-in session has expired (exceeded 24 hours)');
+  }
+
   record.checkOut  = now;
   const hours = parseFloat(((now - record.checkIn) / 3_600_000).toFixed(2));
   record.workHours = hours;
@@ -40,9 +45,22 @@ export const checkOut = asyncHandler(async (req, res) => {
 });
 
 export const getTodayStatus = asyncHandler(async (req, res) => {
-  const { start, end } = dayBounds();
-  const record = await Attendance.findOne({ employee: req.user._id, date: { $gte: start, $lte: end } });
-  res.json(record || null);
+  const record = await Attendance.findOne({ employee: req.user._id }).sort({ date: -1 });
+  if (record) {
+    const now = new Date();
+    // If the record has no checkOut and is within 24 hours, it is considered an active check-in
+    if (!record.checkOut && (now - record.checkIn) < 24 * 3600 * 1000) {
+      return res.json(record);
+    }
+    // If the record has checkOut, we only return it if it belongs to the current calendar day
+    if (record.checkOut) {
+      const { start, end } = dayBounds();
+      if (record.date >= start && record.date <= end) {
+        return res.json(record);
+      }
+    }
+  }
+  res.json(null);
 });
 
 export const getMyAttendance = asyncHandler(async (req, res) => {
