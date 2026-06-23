@@ -109,3 +109,35 @@ export const getAttendanceLogs = asyncHandler(async (req, res) => {
     .limit(500);
   res.json(records);
 });
+
+export const updateAttendanceLog = asyncHandler(async (req, res) => {
+  const { checkIn, checkOut, date, status, notes } = req.body;
+  const record = await Attendance.findById(req.params.id);
+  if (!record) { res.status(404); throw new Error('Attendance record not found'); }
+
+  if (date) record.date = new Date(date);
+  if (status) record.status = status;
+  if (notes !== undefined) record.notes = notes;
+
+  if (checkIn) {
+    record.checkIn = new Date(checkIn);
+  } else if (req.body.hasOwnProperty('checkIn') && !checkIn) {
+    record.checkIn = undefined;
+  }
+
+  if (checkOut) {
+    record.checkOut = new Date(checkOut);
+  } else if (req.body.hasOwnProperty('checkOut') && !checkOut) {
+    record.checkOut = undefined;
+  }
+
+  if (record.checkIn && record.checkOut) {
+    const hours = parseFloat(((record.checkOut - record.checkIn) / 3_600_000).toFixed(2));
+    record.workHours = hours;
+  } else {
+    record.workHours = 0;
+  }
+
+  await record.save();
+  res.json(record);
+});

@@ -65,7 +65,10 @@ export const refreshToken = asyncHandler(async (req, res) => {
     const user = await User.findById(decoded.id);
     if (!user || user.refreshToken !== token) { res.status(401); throw new Error('Invalid refresh token'); }
     const accessToken = generateAccessToken(user._id, user.role);
-    res.json({ accessToken });
+    res.json({
+      accessToken,
+      user: { _id: user._id, name: user.name, email: user.email, role: user.role, department: user.department, designation: user.designation, avatar: user.avatar }
+    });
   } catch {
     res.status(401); throw new Error('Refresh token expired');
   }
